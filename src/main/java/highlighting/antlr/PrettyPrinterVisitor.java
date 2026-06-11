@@ -40,44 +40,121 @@ public final class PrettyPrinterVisitor extends MiniJavaBaseVisitor<Void> {
   // visitClassBody, visitBlock, and visitStatement
   // ----------------------------------------------------
 
-  @Override
-  public Void visitCompilationUnit(MiniJavaParser.CompilationUnitContext ctx) {
-    // TODO:
-    // Produce a nicely structured compilation unit:
-    // - package declaration (if present),
-    // - import declarations (one per line),
-    // - type declarations (one after another),
-    // with sensible blank lines between these parts.
-    return null;
-  }
+    @Override
+    public Void visitCompilationUnit(MiniJavaParser.CompilationUnitContext ctx) {
+        if (ctx.packageDecl() != null) {
+            visit(ctx.packageDecl());
+            nl();
+            nl();
+        }
 
-  @Override
-  public Void visitClassBody(MiniJavaParser.ClassBodyContext ctx) {
-    // TODO:
-    // Format the contents of a class body:
-    // - opening and closing brace,
-    // - one member declaration per line,
-    // - members indented relative to the class.
-    return null;
-  }
+        for (MiniJavaParser.ImportDeclContext importDecl : ctx.importDecl()) {
+            visit(importDecl);
+            nl();
+        }
 
-  @Override
-  public Void visitBlock(MiniJavaParser.BlockContext ctx) {
-    // TODO:
-    // Format a block:
-    // - opening and closing brace,
-    // - one blockStatement per line,
-    // - nested blocks indented further.
-    return null;
-  }
+        if (!ctx.importDecl().isEmpty()) {
+            nl();
+        }
 
-  @Override
-  public Void visitStatement(MiniJavaParser.StatementContext ctx) {
-    // TODO:
-    // Ensure that each statement (if/while/return/block/...) ends up
-    // on exactly one line, with proper indentation for nested statements.
-    return null;
-  }
+        for (MiniJavaParser.TypeDeclContext typeDecl : ctx.typeDecl()) {
+            visit(typeDecl);
+            nl();
+        }
+
+        return null;
+    }
+
+    @Override
+    public Void visitClassBody(MiniJavaParser.ClassBodyContext ctx) {
+        write("{");
+        nl();
+
+        currentIndent++;
+
+        for (MiniJavaParser.ClassBodyDeclarationContext declaration : ctx.classBodyDeclaration()) {
+            visit(declaration);
+
+            if (!atLineStart) {
+                nl();
+            }
+        }
+
+        currentIndent--;
+
+        write("}");
+        return null;
+    }
+
+    @Override
+    public Void visitBlock(MiniJavaParser.BlockContext ctx) {
+        write("{");
+        nl();
+
+        currentIndent++;
+
+        for (MiniJavaParser.BlockStatementContext blockStatement : ctx.blockStatement()) {
+            visit(blockStatement);
+        }
+
+        currentIndent--;
+
+        write("}");
+        nl();
+
+        return null;
+    }
+
+    @Override
+    public Void visitStatement(MiniJavaParser.StatementContext ctx) {
+        if (ctx.block() != null) {
+            visit(ctx.block());
+            return null;
+        }
+
+        if (ctx.RETURN() != null) {
+            write("return");
+
+            if (ctx.expression() != null) {
+                write(" ");
+                visit(ctx.expression());
+            }
+
+            write(";");
+            nl();
+            return null;
+        }
+
+        if (ctx.IF() != null) {
+            write("if(");
+            visit(ctx.expression());
+            write(")");
+            visit(ctx.statement(0));
+
+            if (ctx.ELSE() != null) {
+                write("else");
+                visit(ctx.statement(1));
+            }
+
+            return null;
+        }
+
+        if (ctx.WHILE() != null) {
+            write("while(");
+            visit(ctx.expression());
+            write(")");
+            visit(ctx.statement(0));
+            return null;
+        }
+
+        if (ctx.expression() != null) {
+            visit(ctx.expression());
+            write(";");
+            nl();
+        }
+
+        return null;
+    }
 
   // ---------------- helper methods ----------------
 
