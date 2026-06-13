@@ -18,7 +18,7 @@ public class PrettyPrinterDemo {
       """,
 
             """
-      public class Kontrollfluss{private String text;public void test(){if(text!=null){return;}else{while(text!=null){text=null;}}}}
+      public class IfBedingung{private String text;public void test(){if(text!=null){return;}else{while(text!=null){text=null;}}}}
       """,
 
             """
